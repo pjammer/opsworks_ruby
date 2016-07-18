@@ -5,7 +5,7 @@
 #
 
 prepare_recipe
-
+Chef::Log.info "Now after prepare_recipe"
 # Ruby and bundler
 include_recipe 'deployer'
 if node['platform_family'] == 'debian'

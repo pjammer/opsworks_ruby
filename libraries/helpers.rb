@@ -66,7 +66,9 @@ def perform_bundle_install(release_path)
 end
 
 def prepare_recipe
+  Chef::Log.info("I am in prepare_recipe")
   node.default['deploy'] = Hash[applications.map { |app| [app['shortname'], {}] }].merge(node['deploy'] || {})
+  Chef::Log.info("I am in prepare_recipe seccond last line")
   apps_not_included.each do |app_for_removal|
     node.rm('deploy', app_for_removal)
   end

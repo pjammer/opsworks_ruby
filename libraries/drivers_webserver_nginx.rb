@@ -25,7 +25,7 @@ module Drivers
         recipe = out[:build_type].to_s == 'source' ? 'source' : 'default'
         context.include_recipe("nginx::#{recipe}")
         Chef::Log.info("ss; nginx in recipe with recipe:  nginx::#{recipe} and context:: #{context.inspect}")
-        #define_service(context, :start)
+        define_service(context, :start)
       end
 
       def configure(context)

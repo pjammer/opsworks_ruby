@@ -5,7 +5,7 @@ module Drivers
       def self.build(app, node, options = {})
         engine = detect_engine(app, node, options)
         raise StandardError, 'There is no supported Webserver driver for given configuration.' if engine.blank?
-        Chef::Log.info("SS; in build")
+        Chef::Log.info("SS; in build #{engine.inspect}")
         engine.new(app, node, options)
       end
 

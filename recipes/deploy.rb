@@ -52,16 +52,24 @@ every_enabled_application do |application, deploy|
     migration_command(framework.out[:migration_command])
     migrate framework.out[:migrate]
     before_migrate do
-      perform_bundle_install(release_path)
+        bundle_install File.join(release_path, 'Gemfile') do
+          deployment true
+          without %w(development test)
+        end
 
-      fire_hook(:deploy_before_migrate, context: self,
+        fire_hook(:deploy_before_migrate, context: self,
                                         items: databases + [scm, framework, appserver, worker, webserver])
 
       run_callback_from_file(File.join(release_path, 'deploy', 'before_migrate.rb'))
     end
 
     before_symlink do
-      perform_bundle_install(release_path) unless framework.out[:migrate]
+      unless framework.out[:migrate]
+        bundle_install File.join(release_path, 'Gemfile') do
+          deployment true
+          without %w(development test)
+        end
+      end
 
       fire_hook(:deploy_before_symlink, context: self,
                                         items: databases + [scm, framework, appserver, worker, webserver])

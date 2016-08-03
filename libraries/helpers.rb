@@ -46,9 +46,9 @@ end
 
 def every_enabled_application
   node['deploy'].each do |deploy_app_shortname, deploy|
-    application = applications.detect { |app| app['shortname'] == deploy_app_shortname }
-    next unless application
-    yield application, deploy
+    drapplication = applications.detect { |app| app['shortname'] == deploy_app_shortname }
+    next unless drapplication
+    yield drapplication, deploy
   end
 end
 

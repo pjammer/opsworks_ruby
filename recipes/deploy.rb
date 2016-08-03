@@ -26,7 +26,7 @@ every_enabled_application do |application, deploy|
     group www_group
     rollback_on_error true
     environment application['environment'].merge(framework.out[:deploy_environment])
-
+    environment {'ZZAPI' => "123123123"}
     keep_releases deploy[:keep_releases]
     create_dirs_before_symlink(
       (node['defaults']['deploy']['create_dirs_before_symlink'] + Array.wrap(deploy[:create_dirs_before_symlink])).uniq

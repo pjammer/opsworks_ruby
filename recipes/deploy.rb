@@ -52,13 +52,13 @@ every_enabled_application do |application, deploy|
     migration_command(framework.out[:migration_command])
     migrate framework.out[:migrate]
     before_migrate do
-      execute "cd #{release_path} && RAILS_ENV=production bundle install --without=development test"
-        # bundle_install File.join(release_path, 'Gemfile') do
-        #   deployment true
-        #   without %w(development test)
-        # end
+      #execute "cd #{release_path} && RAILS_ENV=production bundle install --without=development test"
+      bundle_install File.join(release_path, 'Gemfile') do
+        deployment true
+        without %w(development test)
+      end
 
-        fire_hook(:deploy_before_migrate, context: self,
+      fire_hook(:deploy_before_migrate, context: self,
                                         items: databases + [scm, framework, appserver, worker, webserver])
 
       run_callback_from_file(File.join(release_path, 'deploy', 'before_migrate.rb'))
@@ -66,11 +66,11 @@ every_enabled_application do |application, deploy|
 
     before_symlink do
       unless framework.out[:migrate]
-        execute "cd #{release_path} && RAILS_ENV=production bundle install --without=development test"
-        # bundle_install File.join(release_path, 'Gemfile') do
-        #   deployment true
-        #   without %w(development test)
-        # end
+        # execute "cd #{release_path} && RAILS_ENV=production bundle install --without=development test"
+        bundle_install File.join(release_path, 'Gemfile') do
+          deployment true
+          without %w(development test)
+        end
       end
 
       fire_hook(:deploy_before_symlink, context: self,

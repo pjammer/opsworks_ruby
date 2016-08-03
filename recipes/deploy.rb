@@ -56,7 +56,7 @@ every_enabled_application do |application, deploy|
       # bundle_install File.join(release_path, 'Gemfile') do
       #   deployment true
       #   without %w(development test)
-      end
+      # end
 
       fire_hook(:deploy_before_migrate, context: self,
                                         items: databases + [scm, framework, appserver, worker, webserver])

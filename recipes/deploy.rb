@@ -33,14 +33,6 @@ every_enabled_application do |application, deploy|
     purge_before_symlink(
       (node['defaults']['deploy']['purge_before_symlink'] + Array.wrap(deploy[:purge_before_symlink])).uniq
     )
-    # putting application.yml creation here
-    self.template File.join(deploy_dir(application), 'shared', 'config', 'application.yml') do
-      source 'application.yml.erb'
-      mode '0660'
-      owner node['deployer']['user'] || 'root'
-      group www_group
-      variables(env: [])
-    end
 
     #continue with original code
     symlink_before_migrate deploy[:symlink_before_migrate]

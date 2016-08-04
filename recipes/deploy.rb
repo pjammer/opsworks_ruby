@@ -34,7 +34,7 @@ every_enabled_application do |application, deploy|
       (node['defaults']['deploy']['purge_before_symlink'] + Array.wrap(deploy[:purge_before_symlink])).uniq
     )
     # putting application.yml creation here
-    template File.join(deploy_dir(application), 'shared', 'config', 'application.yml') do
+    self.template File.join(deploy_dir(application), 'shared', 'config', 'application.yml') do
       source 'application.yml.erb'
       mode '0660'
       owner node['deployer']['user'] || 'root'

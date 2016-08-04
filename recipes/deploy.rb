@@ -51,6 +51,7 @@ every_enabled_application do |application, deploy|
     end
 
     migration_command(framework.out[:migration_command])
+    Chef::Log.info "Framework Out: #{framework.out[:migrate]}"
     migrate framework.out[:migrate]
     before_migrate do
       execute "cd #{release_path} && RAILS_ENV=production bundle install --without=development test"

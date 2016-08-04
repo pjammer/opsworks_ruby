@@ -26,7 +26,6 @@ every_enabled_application do |application, deploy|
     group www_group
     rollback_on_error true
     environment application['environment'].merge(framework.out[:deploy_environment])
-    environment application['environment'].merge({'ZZAPI' => "123123123"})
     keep_releases deploy[:keep_releases]
     create_dirs_before_symlink(
       (node['defaults']['deploy']['create_dirs_before_symlink'] + Array.wrap(deploy[:create_dirs_before_symlink])).uniq
@@ -34,6 +33,16 @@ every_enabled_application do |application, deploy|
     purge_before_symlink(
       (node['defaults']['deploy']['purge_before_symlink'] + Array.wrap(deploy[:purge_before_symlink])).uniq
     )
+    # putting application.yml creation here
+    context.template File.join(deploy_dir(app), 'shared', 'config', 'application.yml') do
+      source 'application.yml.erb'
+      mode '0660'
+      owner node['deployer']['user'] || 'root'
+      group www_group
+      variables(env: [])
+    end
+
+    #continue with original code
     symlink_before_migrate deploy[:symlink_before_migrate]
     symlinks(node['defaults']['deploy']['symlinks'].merge(deploy[:symlinks] || {}))
 

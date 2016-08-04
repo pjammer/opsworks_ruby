@@ -19,7 +19,7 @@ every_enabled_application do |application, deploy|
   webserver = Drivers::Webserver::Factory.build(application, node)
 
   fire_hook(:before_deploy, context: self, items: databases + [scm, framework, appserver, worker, webserver])
-
+  Chef::Log.info("I am here: #{application['shortname']}")
   deploy application['shortname'] do
     deploy_to deploy_dir(application)
     user node['deployer']['user'] || 'root'

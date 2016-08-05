@@ -35,7 +35,7 @@ module Drivers
         deploy_to = deploy_dir(app)
         environment = app['environment']
         output = out
-
+        Chef::Log.info("Context is #{context.inspect}")
         context.template File.join(deploy_to, File.join('shared', 'config', 'unicorn.conf')) do
           owner node['deployer']['user']
           group www_group

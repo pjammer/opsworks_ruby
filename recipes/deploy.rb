@@ -33,7 +33,8 @@ every_enabled_application do |application, deploy|
     purge_before_symlink(
       (node['defaults']['deploy']['purge_before_symlink'] + Array.wrap(deploy[:purge_before_symlink])).uniq
     )
-
+    Chef::Log.info "app environment is: #{application['environment']}"
+    Chef::Log.info "deploy environment is: #{framework.out[:deploy_environment]}"
     #continue with original code
     symlink_before_migrate deploy[:symlink_before_migrate]
     symlinks(node['defaults']['deploy']['symlinks'].merge(deploy[:symlinks] || {}))

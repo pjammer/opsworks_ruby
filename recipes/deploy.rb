@@ -35,7 +35,7 @@ every_enabled_application do |application, deploy|
     )
     Chef::Log.info "before migrate symlink junk"
     Chef::Log.info deploy[:symlink_before_migrate]
-    symlink_before_migrate 'config/application.yml' => 'config/application.yml'
+    #boy does this muck up deploys.
     symlink_before_migrate deploy[:symlink_before_migrate]
     symlinks(node['defaults']['deploy']['symlinks'].merge(deploy[:symlinks] || {}))
 

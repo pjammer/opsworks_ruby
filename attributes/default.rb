@@ -6,7 +6,8 @@ default['defaults']['deploy']['symlinks'] = {
   'assets' => 'public/assets',
   'cache' => 'tmp/cache',
   'pids' => 'tmp/pids',
-  'log' => 'log'
+  'log' => 'log',
+  'config/application.yml' => 'config/application.yml'
 }
 default['defaults']['deploy']['create_dirs_before_symlink'] =
   %w(tmp public config ../../shared/cache ../../shared/assets)

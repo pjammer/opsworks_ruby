@@ -39,15 +39,7 @@ def create_deploy_dir(application, subdir = '/')
   end
   dir
 end
-def add_application_env(application)
-  template "#{deploy_dir(application)}/shared/config/application.yml" do
-    source "application.yml.erb"
-    owner node['deployer']['user'] || 'root'
-    group www_group
-    mode "0660"
-    variables :env => application['enrvironment']
-  end
-end
+
 def deploy_dir(application)
   File.join('/', 'srv', 'www', application['shortname'])
 end

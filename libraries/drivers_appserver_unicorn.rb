@@ -43,6 +43,14 @@ module Drivers
           source 'unicorn.conf.erb'
           variables environment: environment, deploy_dir: deploy_to, out: output
         end
+        # adding this crap here. it must work!!!
+        context.template File.join(deploy_to, File.join('shared', 'config', 'application.yml')) do
+          owner node['deployer']['user']
+          group www_group
+          mode '0644'
+          source 'application.yml.erb'
+          variables env: environment
+        end
       end
 
       def add_unicorn_service_script(context)

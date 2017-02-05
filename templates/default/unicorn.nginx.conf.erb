@@ -10,10 +10,10 @@ server {
   root <%= File.join(@deploy_dir, 'current', 'public') %>;
 
   client_max_body_size <%= @out[:client_max_body_size] || '400m' %>;
-  client_body_timeout <%= @out[:client_body_timeout] || '12' %>;
+  client_body_timeout <%= @out[:client_body_timeout] || '60' %>;
   client_header_timeout <%= @out[:client_header_timeout] || '12' %>;
   keepalive_timeout <%= @out[:keepalive_timeout] || '15' %>;
-  send_timeout <%= @out[:send_timeout] || '10' %>;
+  send_timeout <%= @out[:send_timeout] || '60' %>;
 
   location / {
     try_files $uri/index.html $uri/index.htm @unicorn;

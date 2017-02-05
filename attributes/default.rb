@@ -58,7 +58,7 @@ default['nginx']['default_site_enabled'] = false
 default['defaults']['webserver']['build_type'] = 'default'
 default['nginx']['client_body_timeout'] = default['defaults']['webserver']['client_body_timeout'] = '12'
 default['nginx']['client_header_timeout'] = default['defaults']['webserver']['client_header_timeout'] = '12'
-default['nginx']['client_max_body_size'] = default['defaults']['webserver']['client_max_body_size'] = '10m'
+default['nginx']['client_max_body_size'] = default['defaults']['webserver']['client_max_body_size'] = '400m'
 default['nginx']['keepalive_timeout'] = default['defaults']['webserver']['keepalive_timeout'] = '15'
 default['nginx']['log_dir'] = default['defaults']['webserver']['log_dir'] = '/var/log/nginx'
 default['nginx']['proxy_read_timeout'] = default['defaults']['webserver']['proxy_read_timeout'] = '60'

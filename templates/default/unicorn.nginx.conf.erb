@@ -9,7 +9,7 @@ server {
 
   root <%= File.join(@deploy_dir, 'current', 'public') %>;
 
-  client_max_body_size <%= @out[:client_max_body_size] || '1m' %>;
+  client_max_body_size <%= @out[:client_max_body_size] || '400m' %>;
   client_body_timeout <%= @out[:client_body_timeout] || '12' %>;
   client_header_timeout <%= @out[:client_header_timeout] || '12' %>;
   keepalive_timeout <%= @out[:keepalive_timeout] || '15' %>;

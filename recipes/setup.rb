@@ -45,6 +45,9 @@ every_enabled_application do |application, _deploy|
   worker = Drivers::Worker::Factory.build(application, node)
   webserver = Drivers::Webserver::Factory.build(application, node)
   Chef::Log.info("here we go...self")
-  Chef::Log.info(self.inspect)
+  Chef::Log.info(self)
+  [scm, framework, appserver, worker, webserver].each do |meh|
+    Chef::Log.info(meh.inspect)
+  end
   fire_hook(:setup, context: self, items: databases + [scm, framework, appserver, worker, webserver])
 end

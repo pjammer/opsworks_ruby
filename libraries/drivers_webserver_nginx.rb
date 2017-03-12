@@ -28,7 +28,7 @@ module Drivers
         Chef::Log.info("i am here in setup")
         Chef::Log.info("#{node.default['nginx']['install_method']}")
         Chef::Log.info("#{recipe.inspect}")
-        Chef::Log.info(content.inspect)
+        Chef::Log.info(context.inspect)
         Chef::Log.info("end context")
 #        define_service(context, :start)
       end

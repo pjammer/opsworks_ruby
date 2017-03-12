@@ -37,7 +37,7 @@ default['authorization']['sudo']['include_sudoers_d'] = true
 # appserver
 ## common
 
-default['defaults']['appserver']['adapter'] = 'puma'
+default['defaults']['appserver']['adapter'] = 'unicorn'
 default['defaults']['appserver']['application_yml'] = false
 default['defaults']['appserver']['dot_env'] = false
 default['defaults']['appserver']['preload_app'] = true
@@ -70,7 +70,7 @@ default['defaults']['webserver']['adapter'] = 'nginx'
 default['defaults']['webserver']['ssl_for_legacy_browsers'] = false
 default['defaults']['webserver']['extra_config'] = ''
 default['defaults']['webserver']['extra_config_ssl'] = ''
-default['defaults']['webserver']['keepalive_timeout'] = '15'
+default['defaults']['webserver']['keepalive_timeout'] = '120'
 default['defaults']['webserver']['log_level'] = 'info'
 
 ## apache2
@@ -83,13 +83,13 @@ default['defaults']['webserver']['proxy_timeout'] = '60'
 # These are parameters, directly for the `nginx` cookbook, not the `webserver` part!
 default['nginx']['build_type'] = 'default'
 default['nginx']['default_site_enabled'] = false
-default['nginx']['client_body_timeout'] = '12'
-default['nginx']['client_header_timeout'] = '12'
-default['nginx']['client_max_body_size'] = '10m'
+default['nginx']['client_body_timeout'] = '120'
+default['nginx']['client_header_timeout'] = '120'
+default['nginx']['client_max_body_size'] = '0'
 default['nginx']['log_dir'] = '/var/log/nginx'
-default['nginx']['proxy_read_timeout'] = '60'
-default['nginx']['proxy_send_timeout'] = '60'
-default['nginx']['send_timeout'] = '10'
+default['nginx']['proxy_read_timeout'] = '120'
+default['nginx']['proxy_send_timeout'] = '120'
+default['nginx']['send_timeout'] = '120'
 
 # framework
 ## common

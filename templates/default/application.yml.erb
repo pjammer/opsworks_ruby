@@ -1,4 +1,4 @@
-<% Chef::Log.info("inside the view and this is at env : #{@env.inspect}")%>
-<% @env.sort.each do |key, val| %>
-  <%= key.to_s %>: <%= (val && val.to_s.inspect) %>
+---
+<% @environment.each do |key, value| %>
+<%= key.to_s %>: <%= value && value.to_s.inspect %>
 <% end %>

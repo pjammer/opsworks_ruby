@@ -14,11 +14,31 @@ def rdses
   search(:aws_opsworks_rds_db_instance)
 end
 
-def fire_hook(name, options)
-  raise ArgumentError 'context is missing' if options[:context].blank?
+def globals(index, application)
+  globals = (node['deploy'][application].try(:[], 'global') || {}).symbolize_keys
+  return globals[index.to_sym] unless globals[index.to_sym].nil?
 
+  old_item = old_globals(index, application)
+  return old_item unless old_item.nil?
+  node['defaults']['global'][index.to_s]
+end
+
+def old_globals(index, application)
+  return unless node['deploy'][application][index.to_s]
+  message =
+    "DEPRECATION WARNING: node['deploy']['#{application}']['#{index}'] is deprecated and will be removed. " \
+    "Please use node['deploy']['#{application}']['global']['#{index}'] instead."
+  Chef::Log.warn(message)
+  STDERR.puts(message)
+  node['deploy'][application][index.to_s]
+end
+
+def fire_hook(name, options)
   Array.wrap(options[:items]).each do |item|
-    item.send(name, options[:context])
+    old_context = item.context
+    item.context = options[:context] if options[:context].present?
+    item.send(name)
+    item.context = old_context
   end
 end
 
@@ -45,23 +65,29 @@ def deploy_dir(application)
 end
 
 def every_enabled_application
-  node['deploy'].each do |deploy_app_shortname, deploy|
-    drapplication = applications.detect { |app| app['shortname'] == deploy_app_shortname }
-    next unless drapplication
-    yield drapplication, deploy
+  node['deploy'].keys.each do |deploy_app_shortname|
+    application = applications.detect { |app| app['shortname'] == deploy_app_shortname }
+    next unless application && application['deploy']
+    yield application
   end
 end
 
-def every_enabled_rds
-  rdses.each do |rds|
+def every_enabled_rds(context, application)
+  data = rdses.presence || [Drivers::Db::Factory.build(context, application)]
+  data.each do |rds|
     yield rds
   end
 end
 
-def perform_bundle_install(release_path)
-  bundle_install File.join(release_path, 'Gemfile') do
-    deployment true
-    without %w(development test)
+def perform_bundle_install(shared_path, envs = {})
+  bundle_path = "#{shared_path}/vendor/bundle"
+
+  execute 'bundle_install' do
+    command "/usr/local/bin/bundle install --deployment --without development test --path #{bundle_path}"
+    user node['deployer']['user'] || 'root'
+    group www_group
+    environment envs
+    cwd release_path
   end
 end
 

@@ -5,25 +5,32 @@ module Drivers
       adapter :sidekiq
       allowed_engines :sidekiq
       output filter: [:config, :process_count, :require, :syslog]
+      packages 'monit', debian: 'redis-server', rhel: 'redis'
 
-      def configure(context)
-        add_sidekiq_config(context)
-        add_sidekiq_monit(context)
+      def configure
+        add_sidekiq_config
+        add_worker_monit
       end
 
-      def after_deploy(context)
-        context.execute 'monit reload'
-        (1..process_count).each do |process_number|
-          context.execute "monit restart sidekiq_#{app['shortname']}-#{process_number}" do
-            retries 3
-          end
-        end
+      def before_deploy
+        quiet_sidekiq
       end
+
+      def after_deploy
+        restart_monit
+      end
+
+      def shutdown
+        quiet_sidekiq
+        unmonitor_monit
+        stop_sidekiq
+      end
+
       alias after_undeploy after_deploy
 
       private
 
-      def add_sidekiq_config(context)
+      def add_sidekiq_config
         deploy_to = deploy_dir(app)
         config = configuration
 
@@ -37,26 +44,37 @@ module Drivers
         end
       end
 
-      def add_sidekiq_monit(context)
-        app_shortname = app['shortname']
-        deploy_to = deploy_dir(app)
-        output = out
-        env = environment
-
-        context.template File.join(node['monit']['basedir'], "sidekiq_#{app_shortname}.monitrc") do
-          mode '0640'
-          source 'sidekiq.monitrc.erb'
-          variables application: app_shortname, out: output, deploy_to: deploy_to, environment: env
+      def quiet_sidekiq
+        (1..process_count).each do |process_number|
+          pid_file = pid_file(process_number)
+          Chef::Log.info("Quiet Sidekiq process if exists: #{pid_file}")
+          next unless File.file?(pid_file) && pid_exists?(File.open(pid_file).read)
+          context.execute "/bin/su - #{node['deployer']['user']} -c 'kill -s USR1 `cat #{pid_file}`'"
         end
       end
 
-      def process_count
-        [out[:process_count].to_i, 1].max
+      def stop_sidekiq
+        (1..process_count).each do |process_number|
+          pid_file = pid_file(process_number)
+          timeout = (out[:config]['timeout'] || 8).to_i
+
+          context.execute(
+            "/bin/su - #{node['deployer']['user']} -c 'cd #{File.join(deploy_dir(app), 'current')} && " \
+            "#{environment.map { |k, v| "#{k}=\"#{v}\"" }.join(' ')} " \
+            "bundle exec sidekiqctl stop #{pid_file} #{timeout}'"
+          )
+        end
       end
 
-      def environment
-        framework = Drivers::Framework::Factory.build(app, node)
-        app['environment'].merge(framework.out[:deploy_environment] || {})
+      def pid_file(process_number)
+        "#{deploy_dir(app)}/shared/pids/sidekiq_#{app['shortname']}-#{process_number}.pid"
+      end
+
+      def pid_exists?(pid)
+        Process.getpgid(pid.to_i)
+        true
+      rescue Errno::ESRCH
+        false
       end
 
       def configuration

@@ -6,19 +6,17 @@
 
 prepare_recipe
 
-every_enabled_application do |application, _deploy|
+every_enabled_application do |application|
   databases = []
-  every_enabled_rds do |rds|
-    databases.push(Drivers::Db::Factory.build(application, node, rds: rds))
+  every_enabled_rds(self, application) do |rds|
+    databases.push(Drivers::Db::Factory.build(self, application, rds: rds))
   end
 
-  databases = [Drivers::Db::Factory.build(application, node)] if rdses.blank?
+  scm = Drivers::Scm::Factory.build(self, application)
+  framework = Drivers::Framework::Factory.build(self, application, databases: databases)
+  appserver = Drivers::Appserver::Factory.build(self, application)
+  worker = Drivers::Worker::Factory.build(self, application, databases: databases)
+  webserver = Drivers::Webserver::Factory.build(self, application)
 
-  scm = Drivers::Scm::Factory.build(application, node)
-  framework = Drivers::Framework::Factory.build(application, node)
-  appserver = Drivers::Appserver::Factory.build(application, node)
-  worker = Drivers::Worker::Factory.build(application, node)
-  webserver = Drivers::Webserver::Factory.build(application, node)
-
-  fire_hook(:shutdown, context: self, items: databases + [scm, framework, appserver, worker, webserver])
+  fire_hook(:shutdown, items: databases + [scm, framework, appserver, worker, webserver])
 end

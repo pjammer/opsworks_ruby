@@ -11,6 +11,12 @@ def node(override = {})
     },
     deploy: {
       dummy_project: {
+        global: {
+          environment: 'staging',
+          create_dirs_before_symlink: %(../shared/test),
+          purge_before_symlink: %w(public/test),
+          symlinks: { 'test' => 'public/test' }
+        },
         # database: {
         #   adapter: 'postgresql',
         #   username: 'dbuser',
@@ -33,29 +39,33 @@ def node(override = {})
         },
         appserver: {
           adapter: 'unicorn',
-          delay: 3
+          delay: 3,
+          thread_min: 0,
+          thread_max: 16,
+          max_connections: 4096
         },
         webserver: {
           adapter: 'nginx',
           client_max_body_size: '125m',
+          limit_request_body: '131072000',
           dhparams: '--- DH PARAMS ---',
-          extra_config: 'extra_config {}'
+          extra_config: 'extra_config {}',
+          log_level: 'debug'
         },
         framework: {
           adapter: 'rails',
-          migrate: false
+          migrate: false,
+          envs_in_console: true
         },
         worker: {
           adapter: 'sidekiq',
-          require: 'lorem_ipsum.rb'
-        },
-        create_dirs_before_symlink: %(../shared/test),
-        purge_before_symlink: %w(public/test),
-        symlinks: { 'test' => 'public/test' }
+          require: 'lorem_ipsum.rb',
+          queues: 'test_queue'
+        }
       }
     },
     defaults: {
-      deploy: {
+      global: {
         symlinks: {
           system: 'public/system',
           assets: 'public/assets',
@@ -75,7 +85,7 @@ def node(override = {})
       },
       webserver: {
         adapter: 'nginx',
-        keepalive_timeout: '15',
+        keepalive_timeout: '65',
         extra_config_ssl: 'extra_config_ssl {}'
       },
       framework: {

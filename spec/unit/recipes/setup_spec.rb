@@ -67,8 +67,19 @@ describe 'opsworks_ruby::setup' do
       end
 
       it 'installs ruby 2.3' do
+        chef_run = ChefSpec::SoloRunner.new(platform: 'ubuntu', version: '14.04') do |solo_node|
+          solo_node.set['ruby'] = { 'version' => '2.3' }
+          solo_node.set['lsb'] = node['lsb']
+          solo_node.set['deploy'] = node['deploy']
+        end.converge(described_recipe)
+
         expect(chef_run).to install_package('ruby2.3')
         expect(chef_run).to install_package('ruby2.3-dev')
+      end
+
+      it 'installs ruby 2.4' do
+        expect(chef_run).to install_package('ruby2.4')
+        expect(chef_run).to install_package('ruby2.4-dev')
       end
     end
 
@@ -110,9 +121,21 @@ describe 'opsworks_ruby::setup' do
       end
 
       it 'installs ruby 2.3' do
+        chef_run_rhel = ChefSpec::SoloRunner.new(platform: 'amazon', version: '2015.03') do |solo_node|
+          solo_node.set['ruby'] = { 'version' => '2.3' }
+          solo_node.set['lsb'] = node['lsb']
+          solo_node.set['deploy'] = node['deploy']
+        end.converge(described_recipe)
+
         expect(chef_run_rhel).to install_package('ruby23')
         expect(chef_run_rhel).to install_package('ruby23-devel')
         expect(chef_run_rhel).to run_execute('/usr/sbin/alternatives --set ruby /usr/bin/ruby2.3')
+      end
+
+      it 'installs ruby 2.4' do
+        expect(chef_run_rhel).to install_package('ruby24')
+        expect(chef_run_rhel).to install_package('ruby24-devel')
+        expect(chef_run_rhel).to run_execute('/usr/sbin/alternatives --set ruby /usr/bin/ruby2.4')
       end
     end
   end
@@ -129,12 +152,26 @@ describe 'opsworks_ruby::setup' do
     end
   end
 
-  context 'Postgresql + git + nginx' do
+  context 'epel' do
+    it 'rhel' do
+      expect(chef_run_rhel).to run_execute('yum-config-manager --enable epel')
+    end
+  end
+
+  context 'apt_repository' do
+    it 'debian' do
+      expect(chef_run).to add_apt_repository('apache2')
+    end
+  end
+
+  context 'Postgresql + git + nginx + sidekiq' do
     it 'installs required packages for debian' do
       expect(chef_run).to install_package('nginx')
       expect(chef_run).to install_package('zlib1g-dev')
       expect(chef_run).to install_package('git')
       expect(chef_run).to install_package('libpq-dev')
+      expect(chef_run).to install_package('redis-server')
+      expect(chef_run).to install_package('monit')
     end
 
     it 'installs required packages for rhel' do
@@ -142,6 +179,8 @@ describe 'opsworks_ruby::setup' do
       expect(chef_run_rhel).to install_package('zlib-devel')
       expect(chef_run_rhel).to install_package('git')
       expect(chef_run_rhel).to install_package('postgresql94-devel')
+      expect(chef_run_rhel).to install_package('redis')
+      expect(chef_run_rhel).to install_package('monit')
     end
 
     it 'defines service which starts nginx' do
@@ -149,24 +188,74 @@ describe 'opsworks_ruby::setup' do
     end
   end
 
-  context 'Mysql' do
+  context 'Mysql + apache2 + resque' do
     before do
       stub_search(:aws_opsworks_rds_db_instance, '*:*').and_return([aws_opsworks_rds_db_instance(engine: 'mysql')])
     end
 
-    it 'installs required packages for debian' do
-      expect(chef_run).to install_package('libmysqlclient-dev')
+    let(:chef_run) do
+      ChefSpec::SoloRunner.new(platform: 'ubuntu', version: '14.04') do |solo_node|
+        deploy = node['deploy']
+        deploy['dummy_project']['webserver']['adapter'] = 'apache2'
+        deploy['dummy_project']['worker']['adapter'] = 'resque'
+        solo_node.set['deploy'] = deploy
+      end.converge(described_recipe)
     end
 
-    it 'installs required packages for rhel' do
-      expect(chef_run_rhel).to install_package('mysql-devel')
+    let(:chef_run_rhel) do
+      ChefSpec::SoloRunner.new(platform: 'amazon', version: '2015.03') do |solo_node|
+        deploy = node['deploy']
+        deploy['dummy_project']['webserver']['adapter'] = 'apache2'
+        deploy['dummy_project']['worker']['adapter'] = 'resque'
+        solo_node.set['deploy'] = deploy
+      end.converge(described_recipe)
+    end
+
+    context 'debian' do
+      it 'installs required packages' do
+        expect(chef_run).to install_package('libmysqlclient-dev')
+        expect(chef_run).to install_package('apache2')
+        expect(chef_run).to install_package('redis-server')
+        expect(chef_run).to install_package('monit')
+      end
+
+      it 'defines service which starts apache2' do
+        expect(chef_run).to start_service('apache2')
+      end
+
+      it 'enables necessary modules for apache2' do
+        expect(chef_run)
+          .to run_execute('a2enmod expires headers lbmethod_byrequests proxy proxy_balancer proxy_http rewrite ssl')
+      end
+    end
+
+    context 'rhel' do
+      it 'installs required packages' do
+        expect(chef_run_rhel).to install_package('mysql-devel')
+        expect(chef_run_rhel).to install_package('httpd24')
+        expect(chef_run_rhel).to install_package('mod24_ssl')
+        expect(chef_run_rhel).to install_package('redis')
+        expect(chef_run_rhel).to install_package('monit')
+      end
+
+      it 'defines service which starts httpd' do
+        expect(chef_run_rhel).to start_service('httpd')
+      end
+
+      it 'creates sites-* directories' do
+        expect(chef_run_rhel).to create_directory('/etc/httpd/sites-available')
+        expect(chef_run_rhel).to create_directory('/etc/httpd/sites-enabled')
+        expect(chef_run_rhel)
+          .to run_execute('echo "IncludeOptional sites-enabled/*.conf" >> /etc/httpd/conf/httpd.conf')
+      end
     end
   end
 
-  context 'Sqlite' do
+  context 'Sqlite + delayed_job' do
     temp_node = node['deploy']
     temp_node['dummy_project']['database'] = {}
     temp_node['dummy_project']['database']['adapter'] = 'sqlite'
+    temp_node['dummy_project']['worker']['adapter'] = 'delayed_job'
 
     let(:chef_run) do
       ChefSpec::SoloRunner.new(platform: 'ubuntu', version: '14.04') do |solo_node|
@@ -186,10 +275,12 @@ describe 'opsworks_ruby::setup' do
 
     it 'installs required packages for debian' do
       expect(chef_run).to install_package('libsqlite3-dev')
+      expect(chef_run).to install_package('monit')
     end
 
     it 'installs required packages for rhel' do
       expect(chef_run_rhel).to install_package('sqlite-devel')
+      expect(chef_run_rhel).to install_package('monit')
     end
   end
 

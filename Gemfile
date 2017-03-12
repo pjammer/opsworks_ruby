@@ -5,6 +5,7 @@ group :lint do
   gem 'brakeman'
   gem 'bundler-audit'
   gem 'coveralls'
+  gem 'fasterer'
   gem 'foodcritic'
   gem 'mdl'
   gem 'overcommit'
@@ -15,6 +16,7 @@ end
 group :chef do
   gem 'berkshelf'
   gem 'chefspec'
+  gem 'kitchen-docker'
   gem 'kitchen-vagrant'
   gem 'rspec'
   gem 'test-kitchen'

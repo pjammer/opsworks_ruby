@@ -15,3 +15,8 @@ node_modules/
 
 .kitchen/
 .kitchen.local.yml
+.asset-cache
+.sass-cache
+_site
+docs/build/*
+!docs/build/.keep

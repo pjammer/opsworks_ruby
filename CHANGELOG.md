@@ -1,3 +1,210 @@
+<a name="1.4.0"></a>
+# [1.4.0](https://github.com/ajgon/opsworks_ruby/compare/v1.3.0...v1.4.0) (2017-03-12)
+
+
+### Bug Fixes
+
+* Bump faraday middleware version ([d508928](https://github.com/ajgon/opsworks_ruby/commit/d508928))
+* Switched `nginx` cookbook to more actively developed `chef_nginx` ([0f4f64c](https://github.com/ajgon/opsworks_ruby/commit/0f4f64c)), closes [#65](https://github.com/ajgon/opsworks_ruby/issues/65)
+
+
+### Features
+
+* **webserver:** Add app specific error log and location for nginx ([a098279](https://github.com/ajgon/opsworks_ruby/commit/a098279))
+* **worker:** Safely quiet and shutdown sidekiq ([c36652f](https://github.com/ajgon/opsworks_ruby/commit/c36652f))
+
+
+### BREAKING CHANGES
+
+* `nginx` cookbook is not a `opsworks_ruby` dependency
+anymore. Now it's `chef_nginx` which is more actively developed.
+Please update your recipe repositories.
+
+
+
+<a name="1.3.0"></a>
+# [1.3.0](https://github.com/ajgon/opsworks_ruby/compare/v1.2.1...v1.3.0) (2017-01-16)
+
+
+### Features
+
+* **appserver:** Allowed deploy_before_restart on null appserver ([b0375a6](https://github.com/ajgon/opsworks_ruby/commit/b0375a6))
+* **database:** Added aurora as allowed engine for mysql2 adapter ([a2789f0](https://github.com/ajgon/opsworks_ruby/commit/a2789f0))
+* **ruby:** Added support for ruby 2.4 ([a89451f](https://github.com/ajgon/opsworks_ruby/commit/a89451f))
+
+
+### BREAKING CHANGES
+
+* ruby: Ruby 2.4 is now a default Ruby interpreter
+
+
+
+<a name="1.2.1"></a>
+## [1.2.1](https://github.com/ajgon/opsworks_ruby/compare/v1.2.0...v1.2.1) (2016-11-27)
+
+
+### Bug Fixes
+
+* Fixed broken `migration_command` default ([36cdb68](https://github.com/ajgon/opsworks_ruby/commit/36cdb68)), closes [#58](https://github.com/ajgon/opsworks_ruby/issues/58)
+
+
+
+<a name="1.2.0"></a>
+# [1.2.0](https://github.com/ajgon/opsworks_ruby/compare/v1.1.2...v1.2.0) (2016-11-02)
+
+
+### Bug Fixes
+
+* Moved global deploy parameters to `app['global']` section ([b4f8d6b](https://github.com/ajgon/opsworks_ruby/commit/b4f8d6b))
+
+
+### BREAKING CHANGES
+
+* `app['create_dirs_before_symlink']`,
+`app['purge_before_symlink']`, `app['rollback_on_error']` and
+`app['symlinks']` are now `app['global']['create_dirs_before_symlink']`,
+`app['global']['purge_before_symlink']`,
+`app['global']['rollback_on_error']` and `app['global']['symlink']`. The
+old format still works, but it shows DEPRECATION warning. It will be
+removed in one of the next major releases.
+
+
+
+<a name="1.1.2"></a>
+## [1.1.2](https://github.com/ajgon/opsworks_ruby/compare/v1.1.1...v1.1.2) (2016-10-27)
+
+
+### Bug Fixes
+
+* **webserver:** Improved apache2 support ([4293bff](https://github.com/ajgon/opsworks_ruby/commit/4293bff))
+* `node['applications']` are back ([5fc42c3](https://github.com/ajgon/opsworks_ruby/commit/5fc42c3)), closes [#55](https://github.com/ajgon/opsworks_ruby/issues/55)
+
+
+### Features
+
+* `app['rollback_on_error']` implemented ([e6934a7](https://github.com/ajgon/opsworks_ruby/commit/e6934a7)), closes [#54](https://github.com/ajgon/opsworks_ruby/issues/54)
+
+
+
+<a name="1.1.1"></a>
+## [1.1.1](https://github.com/ajgon/opsworks_ruby/compare/v1.1.0...v1.1.1) (2016-10-21)
+
+
+### Bug Fixes
+
+* **deploy:** Fixed deploy callbacks launching order ([81d31c9](https://github.com/ajgon/opsworks_ruby/commit/81d31c9))
+
+
+
+<a name="1.1.0"></a>
+# [1.1.0](https://github.com/ajgon/opsworks_ruby/compare/v1.0.0...v1.1.0) (2016-10-21)
+
+
+### Bug Fixes
+
+* Application deployment fix ([7ac4166](https://github.com/ajgon/opsworks_ruby/commit/7ac4166))
+
+
+### BREAKING CHANGES
+
+* node['applications'] becomes obsolete
+
+
+
+<a name="1.0.0"></a>
+# [1.0.0](https://github.com/ajgon/opsworks_ruby/compare/v0.8.0...v1.0.0) (2016-10-04)
+
+
+### Bug Fixes
+
+* `monit reload` and `monit restart` order ([2c4a84a](https://github.com/ajgon/opsworks_ruby/commit/2c4a84a)), closes [#29](https://github.com/ajgon/opsworks_ruby/issues/29)
+* **appserver:** Removed `accept_filter` from unicorn configurator ([76a7f36](https://github.com/ajgon/opsworks_ruby/commit/76a7f36))
+* **framework:** Added missing `deploy_environment` to `null` framework ([673a21d](https://github.com/ajgon/opsworks_ruby/commit/673a21d))
+* **framework:** Fixed `envs_in_console` for `rails` ([f8856c8](https://github.com/ajgon/opsworks_ruby/commit/f8856c8))
+
+
+### Features
+
+* **appserver:** "Puma" support added ([f6e80ad](https://github.com/ajgon/opsworks_ruby/commit/f6e80ad)), closes [#38](https://github.com/ajgon/opsworks_ruby/issues/38)
+* **appserver:** "Thin" support added ([9667939](https://github.com/ajgon/opsworks_ruby/commit/9667939)), closes [#39](https://github.com/ajgon/opsworks_ruby/issues/39)
+* **appserver:** Switched default appserver from `unicorn` to `puma` ([0e72200](https://github.com/ajgon/opsworks_ruby/commit/0e72200))
+* **framework:** "hanami.rb" support added ([23fdd04](https://github.com/ajgon/opsworks_ruby/commit/23fdd04)), closes [#43](https://github.com/ajgon/opsworks_ruby/issues/43)
+* **framework:** "Null" support added ([b9e7b63](https://github.com/ajgon/opsworks_ruby/commit/b9e7b63)), closes [#47](https://github.com/ajgon/opsworks_ruby/issues/47)
+* **framework:** "Padrino" support added ([a240d92](https://github.com/ajgon/opsworks_ruby/commit/a240d92)), closes [#44](https://github.com/ajgon/opsworks_ruby/issues/44)
+* **framework:** Environemnt variables in `rails console` ([89252b3](https://github.com/ajgon/opsworks_ruby/commit/89252b3))
+* **global:** Moved `app['environment']` to `app['global']['environment']` ([432a21c](https://github.com/ajgon/opsworks_ruby/commit/432a21c)), closes [#50](https://github.com/ajgon/opsworks_ruby/issues/50)
+* **webserver:** "Apache2" support added ([1ca5b0b](https://github.com/ajgon/opsworks_ruby/commit/1ca5b0b)), closes [#40](https://github.com/ajgon/opsworks_ruby/issues/40)
+* **worker:** "delayed_job" support added ([7235720](https://github.com/ajgon/opsworks_ruby/commit/7235720)), closes [#42](https://github.com/ajgon/opsworks_ruby/issues/42)
+* **worker:** "resque" support added ([ccc13e4](https://github.com/ajgon/opsworks_ruby/commit/ccc13e4)), closes [#41](https://github.com/ajgon/opsworks_ruby/issues/41)
+
+
+### Performance Improvements
+
+* Added `fasterer` gem to overcommit ([c1ed974](https://github.com/ajgon/opsworks_ruby/commit/c1ed974))
+
+
+### BREAKING CHANGES
+
+* global: If you were using an `app['environment']` variable (for example to set env to
+staging), please update your stack/layer JSONs to `app['global']['environment']`.
+* appserver: Unicorn is no longer a default appserver, in favor of Puma. If you have a working
+instances which were relying on that, you have to either set `app['appserver']['adapter'] =
+'unicorn'` in your stack/layer JSON file, or switch the app server in your application
+* webserver: `sites-available` and `sites-enabled` file names format
+changed. From this commit, the `*.conf` extension is appended. If you
+plan to update your cookbooks on productional environments, don't forget
+to remove the old ones, otherwise you will end up with two the same
+configurations in different files, which cause `nginx` to fail.
+
+If you start noticing `duplicate upstream` errors, this is probably due
+this case.
+
+
+
+<a name="0.8.0"></a>
+# [0.8.0](https://github.com/ajgon/opsworks_ruby/compare/v0.7.0...v0.8.0) (2016-09-02)
+
+
+### Bug Fixes
+
+* Switched from `nginx reload` to `nginx restart` after succesful deploy/undeploy ([16ab9d1](https://github.com/ajgon/opsworks_ruby/commit/16ab9d1)), closes [#36](https://github.com/ajgon/opsworks_ruby/issues/36)
+
+
+### Features
+
+* Added GIT_SSH support for bundle install ([232e8ac](https://github.com/ajgon/opsworks_ruby/commit/232e8ac)), closes [#37](https://github.com/ajgon/opsworks_ruby/issues/37)
+* Caches bundler installs to speed up deployments ([baa0f44](https://github.com/ajgon/opsworks_ruby/commit/baa0f44))
+* Implemented configurable RAILS_ENV ([2567b71](https://github.com/ajgon/opsworks_ruby/commit/2567b71)), closes [#34](https://github.com/ajgon/opsworks_ruby/issues/34)
+
+
+
+<a name="0.7.0"></a>
+# [0.7.0](https://github.com/ajgon/opsworks_ruby/compare/v0.4.0...v0.7.0) (2016-08-29)
+
+
+### Bug Fixes
+
+* Moved extra env files creation, later in the stack (before_restart) ([8a5223f](https://github.com/ajgon/opsworks_ruby/commit/8a5223f))
+* Reload monit after restarting services ([eaa2aab](https://github.com/ajgon/opsworks_ruby/commit/eaa2aab))
+* Set the default DB adapter to `sqlite3` ([b4b1ee4](https://github.com/ajgon/opsworks_ruby/commit/b4b1ee4))
+* specify bundle path on bundle install ([b9d4335](https://github.com/ajgon/opsworks_ruby/commit/b9d4335))
+
+
+### Features
+
+* Added support for gems like figaro and dotenv ([c989494](https://github.com/ajgon/opsworks_ruby/commit/c989494)), closes [#28](https://github.com/ajgon/opsworks_ruby/issues/28)
+
+
+
+<a name="0.6.0"></a>
+# [0.6.0](https://github.com/ajgon/opsworks_ruby/compare/v0.5.0...v0.6.0) (2016-08-17)
+
+### BREAKING CHANGES
+
+* Removed `application_ruby` cookbook dependency
+
+
+
 <a name="0.5.0"></a>
 # [0.5.0](https://github.com/ajgon/opsworks_ruby/compare/v0.4.0...v0.5.0) (2016-07-21)
 

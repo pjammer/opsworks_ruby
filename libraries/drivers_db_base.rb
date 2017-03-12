@@ -9,26 +9,8 @@ module Drivers
 
       defaults encoding: 'utf8', host: 'localhost', reconnect: true
 
-      def initialize(app, node, options = {})
-        super
-      end
-
-      def setup(context)
-        handle_packages(context)
-      end
-
-      def configure(context)
-        return unless applicable_for_configuration?
-
-        database = out
-        rails_env = app['attributes']['rails_env']
-        context.template File.join(deploy_dir(app), 'shared', 'config', 'database.yml') do
-          source 'database.yml.erb'
-          mode '0660'
-          owner node['deployer']['user'] || 'root'
-          group www_group
-          variables(database: database, environment: rails_env)
-        end
+      def setup
+        handle_packages
       end
 
       # rubocop:disable Metrics/AbcSize
@@ -51,6 +33,11 @@ module Drivers
         defaults.merge(base).merge(adapter: adapter)
       end
 
+      def applicable_for_configuration?
+        configuration_data_source == :node_engine || app['data_sources'].first.blank? || options[:rds].blank? ||
+          app['data_sources'].first['arn'] == options[:rds]['rds_db_instance_arn']
+      end
+
       protected
 
       def app_engine
@@ -58,14 +45,8 @@ module Drivers
       end
 
       def node_engine
-        node['deploy'][app['shortname']]['database'].try(:[], 'adapter')
-      end
-
-      private
-
-      def applicable_for_configuration?
-        configuration_data_source == :node_engine || app['data_sources'].first.blank? || options[:rds].blank? ||
-          app['data_sources'].first['arn'] == options[:rds]['rds_db_instance_arn']
+        node['deploy'][app['shortname']]['database'].try(:[], 'adapter') ||
+          node['defaults'].try(:[], 'database').try(:[], 'adapter')
       end
     end
   end

@@ -5,6 +5,10 @@ module Drivers
       adapter :null
       allowed_engines :null
       output filter: []
+
+      def configure; end
+      alias after_deploy configure
+      alias after_undeploy configure
     end
   end
 end

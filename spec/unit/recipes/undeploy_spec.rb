@@ -29,14 +29,89 @@ describe 'opsworks_ruby::undeploy' do
       expect(chef_run).to run_execute('stop unicorn')
       expect(chef_run).to run_execute('start unicorn')
 
-      expect(undeploy).to notify('service[nginx]').to(:reload).delayed
+      expect(undeploy).to notify('service[nginx]').to(:restart).delayed
       expect(service).to do_nothing
     end
 
     it 'restarts sidekiqs via monit' do
-      expect(chef_run).to run_execute('monit reload')
       expect(chef_run).to run_execute("monit restart sidekiq_#{aws_opsworks_app['shortname']}-1")
       expect(chef_run).to run_execute("monit restart sidekiq_#{aws_opsworks_app['shortname']}-2")
+    end
+  end
+
+  context 'Puma + Apache + resque' do
+    let(:chef_run) do
+      ChefSpec::SoloRunner.new(platform: 'ubuntu', version: '14.04') do |solo_node|
+        deploy = node['deploy']
+        deploy['dummy_project']['appserver']['adapter'] = 'puma'
+        deploy['dummy_project']['webserver']['adapter'] = 'apache2'
+        deploy['dummy_project']['worker']['adapter'] = 'resque'
+        solo_node.set['deploy'] = deploy
+      end.converge(described_recipe)
+    end
+    let(:chef_run_rhel) do
+      ChefSpec::SoloRunner.new(platform: 'amazon', version: '2016.03') do |solo_node|
+        deploy = node['deploy']
+        deploy['dummy_project']['appserver']['adapter'] = 'puma'
+        deploy['dummy_project']['webserver']['adapter'] = 'apache2'
+        deploy['dummy_project']['worker']['adapter'] = 'resque'
+        solo_node.set['deploy'] = deploy
+      end.converge(described_recipe)
+    end
+
+    it 'performs a rollback on debian' do
+      undeploy_debian = chef_run.deploy(aws_opsworks_app['shortname'])
+
+      expect(undeploy_debian).to notify('service[apache2]').to(:restart).delayed
+      expect(chef_run).to run_execute('stop puma')
+      expect(chef_run).to run_execute('start puma')
+    end
+
+    it 'performs a rollback on rhel' do
+      undeploy_rhel = chef_run_rhel.deploy(aws_opsworks_app['shortname'])
+
+      expect(undeploy_rhel).to notify('service[httpd]').to(:restart).delayed
+      expect(chef_run_rhel).to run_execute('stop puma')
+      expect(chef_run_rhel).to run_execute('start puma')
+    end
+
+    it 'restarts resques via monit' do
+      expect(chef_run).to run_execute("monit restart resque_#{aws_opsworks_app['shortname']}-1")
+      expect(chef_run).to run_execute("monit restart resque_#{aws_opsworks_app['shortname']}-2")
+    end
+  end
+
+  context 'Thin + delayed_job' do
+    let(:chef_run) do
+      ChefSpec::SoloRunner.new(platform: 'ubuntu', version: '14.04') do |solo_node|
+        deploy = node['deploy']
+        deploy['dummy_project']['appserver']['adapter'] = 'thin'
+        deploy['dummy_project']['worker']['adapter'] = 'delayed_job'
+        solo_node.set['deploy'] = deploy
+      end.converge(described_recipe)
+    end
+    let(:chef_run_rhel) do
+      ChefSpec::SoloRunner.new(platform: 'amazon', version: '2016.03') do |solo_node|
+        deploy = node['deploy']
+        deploy['dummy_project']['appserver']['adapter'] = 'thin'
+        deploy['dummy_project']['worker']['adapter'] = 'delayed_job'
+        solo_node.set['deploy'] = deploy
+      end.converge(described_recipe)
+    end
+
+    it 'performs a rollback on debian' do
+      expect(chef_run).to run_execute('stop thin')
+      expect(chef_run).to run_execute('start thin')
+    end
+
+    it 'performs a rollback on rhel' do
+      expect(chef_run_rhel).to run_execute('stop thin')
+      expect(chef_run_rhel).to run_execute('start thin')
+    end
+
+    it 'restarts delayed_jobs via monit' do
+      expect(chef_run).to run_execute("monit restart delayed_job_#{aws_opsworks_app['shortname']}-1")
+      expect(chef_run).to run_execute("monit restart delayed_job_#{aws_opsworks_app['shortname']}-2")
     end
   end
 

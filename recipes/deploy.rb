@@ -4,40 +4,48 @@ prepare_recipe
 
 include_recipe 'opsworks_ruby::configure'
 
-every_enabled_application do |application, deploy|
+every_enabled_application do |application|
   databases = []
-  every_enabled_rds do |rds|
-    databases.push(Drivers::Db::Factory.build(application, node, rds: rds))
+  every_enabled_rds(self, application) do |rds|
+    databases.push(Drivers::Db::Factory.build(self, application, rds: rds))
   end
 
-  databases = [Drivers::Db::Factory.build(application, node)] if rdses.blank?
+  scm = Drivers::Scm::Factory.build(self, application)
+  framework = Drivers::Framework::Factory.build(self, application, databases: databases)
+  appserver = Drivers::Appserver::Factory.build(self, application)
+  worker = Drivers::Worker::Factory.build(self, application, databases: databases)
+  webserver = Drivers::Webserver::Factory.build(self, application)
+  bundle_env = scm.class.adapter.to_s == 'Chef::Provider::Git' ? { 'GIT_SSH' => scm.out[:ssh_wrapper] } : {}
 
-  scm = Drivers::Scm::Factory.build(application, node)
-  framework = Drivers::Framework::Factory.build(application, node)
-  appserver = Drivers::Appserver::Factory.build(application, node)
-  worker = Drivers::Worker::Factory.build(application, node)
-  webserver = Drivers::Webserver::Factory.build(application, node)
+  fire_hook(:before_deploy, items: databases + [scm, framework, appserver, worker, webserver])
 
-  fire_hook(:before_deploy, context: self, items: databases + [scm, framework, appserver, worker, webserver])
-  Chef::Log.info("I am here: #{application['shortname']}")
   deploy application['shortname'] do
     deploy_to deploy_dir(application)
     user node['deployer']['user'] || 'root'
     group www_group
-    rollback_on_error true
-    environment application['environment'].merge(framework.out[:deploy_environment])
-    keep_releases deploy[:keep_releases]
+    environment application['environment'].merge(framework.out[:deploy_environment] || {})
+
+    if globals(:rollback_on_error, application['shortname']).nil?
+      rollback_on_error node['defaults']['global']['rollback_on_error']
+    else
+      rollback_on_error globals(:rollback_on_error, application['shortname'])
+    end
+
+    keep_releases globals(:keep_releases, application['shortname'])
     create_dirs_before_symlink(
-      (node['defaults']['deploy']['create_dirs_before_symlink'] + Array.wrap(deploy[:create_dirs_before_symlink])).uniq
+      (
+        node['defaults']['global']['create_dirs_before_symlink'] +
+        Array.wrap(globals(:create_dirs_before_symlink, application['shortname']))
+      ).uniq
     )
     purge_before_symlink(
-      (node['defaults']['deploy']['purge_before_symlink'] + Array.wrap(deploy[:purge_before_symlink])).uniq
+      (
+        node['defaults']['global']['purge_before_symlink'] +
+        Array.wrap(globals(:purge_before_symlink, application['shortname']))
+      ).uniq
     )
-    Chef::Log.info "before migrate symlink junk"
-    Chef::Log.info deploy[:symlink_before_migrate]
-    #boy does this muck up deploys.
-    symlink_before_migrate deploy[:symlink_before_migrate]
-    symlinks(node['defaults']['deploy']['symlinks'].merge(deploy[:symlinks] || {}))
+    symlink_before_migrate globals(:symlink_before_migrate, application['shortname'])
+    symlinks(node['defaults']['global']['symlinks'].merge(globals(:symlinks, application['shortname']) || {}))
 
     scm.out.each do |scm_key, scm_value|
       send(scm_key, scm_value) if respond_to?(scm_key)
@@ -51,56 +59,44 @@ every_enabled_application do |application, deploy|
       end
     end
 
-    migration_command(framework.out[:migration_command])
-    Chef::Log.info "Framework Out: #{framework.out[:migrate]}"
+    migration_command(framework.out[:migration_command]) if framework.out[:migration_command]
     migrate framework.out[:migrate]
     before_migrate do
-      execute "cd #{release_path} && RAILS_ENV=production bundle install --without=development test"
-      # bundle_install File.join(release_path, 'Gemfile') do
-      #   deployment true
-      #   without %w(development test)
-      # end
+      perform_bundle_install(shared_path, bundle_env)
 
-      fire_hook(:deploy_before_migrate, context: self,
-                                        items: databases + [scm, framework, appserver, worker, webserver])
+      fire_hook(
+        :deploy_before_migrate, context: self, items: databases + [scm, framework, appserver, worker, webserver]
+      )
 
       run_callback_from_file(File.join(release_path, 'deploy', 'before_migrate.rb'))
     end
 
     before_symlink do
-      unless framework.out[:migrate]
-        execute "cd #{release_path} && RAILS_ENV=production bundle install --without=development test"
-        # bundle_install File.join(release_path, 'Gemfile') do
-        #   deployment true
-        #   without %w(development test)
-        # end
-      end
+      perform_bundle_install(shared_path, bundle_env) unless framework.out[:migrate]
 
-      fire_hook(:deploy_before_symlink, context: self,
-                                        items: databases + [scm, framework, appserver, worker, webserver])
+      fire_hook(
+        :deploy_before_symlink, context: self, items: databases + [scm, framework, appserver, worker, webserver]
+      )
 
       run_callback_from_file(File.join(release_path, 'deploy', 'before_symlink.rb'))
     end
 
     before_restart do
-      directory File.join(release_path, '.git') do
-        recursive true
-        action :delete
-      end if scm.out[:remove_scm_files]
-
-      fire_hook(:deploy_before_restart, context: self,
-                                        items: databases + [scm, framework, appserver, worker, webserver])
+      fire_hook(
+        :deploy_before_restart, context: self, items: databases + [scm, framework, appserver, worker, webserver]
+      )
 
       run_callback_from_file(File.join(release_path, 'deploy', 'before_restart.rb'))
     end
 
     after_restart do
-      fire_hook(:deploy_after_restart, context: self,
-                                       items: databases + [scm, framework, appserver, worker, webserver])
+      fire_hook(
+        :deploy_after_restart, context: self, items: databases + [scm, framework, appserver, worker, webserver]
+      )
 
       run_callback_from_file(File.join(release_path, 'deploy', 'after_restart.rb'))
     end
   end
 
-  fire_hook(:after_deploy, context: self, items: databases + [scm, framework, appserver, worker, webserver])
+  fire_hook(:after_deploy, items: databases + [scm, framework, appserver, worker, webserver])
 end

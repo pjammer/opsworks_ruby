@@ -1,10 +1,12 @@
 # frozen_string_literal: true
 module Drivers
   class Base
-    attr_reader :app, :node, :options, :configuration_data_source
-    def initialize(app, node, options = {})
+    attr_reader :app, :options, :configuration_data_source
+    attr_accessor :context
+
+    def initialize(context, app, options = {})
+      @context = context
       @app = app
-      @node = node
       @options = options
       @configuration_data_source = validate_app_engine
     end
@@ -19,41 +21,39 @@ module Drivers
       (@adapter || self.class.name.underscore).to_s
     end
 
+    def self.adapters(options = { include_null: false })
+      adapters = descendants.select { |descendant| descendant.respond_to?(:adapter) }.map(&:adapter)
+      options[:include_null] ? adapters : adapters - ['null']
+    end
+
     # Dummy methods for children to redefine
-    def setup(_context)
-    end
+    def setup; end
 
-    def configure(_context)
-    end
+    def configure; end
 
-    def before_deploy(_context)
-    end
+    def before_deploy; end
 
-    def deploy_before_migrate(_context)
-    end
+    def deploy_before_migrate; end
 
-    def deploy_before_symlink(_context)
-    end
+    def deploy_before_symlink; end
 
-    def deploy_before_restart(_context)
-    end
+    def deploy_before_restart; end
 
-    def deploy_after_restart(_context)
-    end
+    def deploy_after_restart; end
 
-    def after_deploy(_context)
-    end
+    def after_deploy; end
 
-    def before_undeploy(_context)
-    end
+    def before_undeploy; end
 
-    def after_undeploy(_context)
-    end
+    def after_undeploy; end
 
-    def shutdown(_context)
-    end
+    def shutdown; end
 
     protected
+
+    def node
+      context.node
+    end
 
     def allowed_engines
       self.class.allowed_engines
@@ -61,6 +61,10 @@ module Drivers
 
     def adapter
       self.class.adapter
+    end
+
+    def deploy_env
+      globals(:environment, app['shortname'])
     end
 
     def validate_app_engine

@@ -17,7 +17,15 @@ else
   execute "/usr/sbin/alternatives --set ruby /usr/bin/ruby#{ruby_pkg_version.join('.')}"
 end
 
-Chef::Log.info "Now after platform block_recipe"
+apt_repository 'apache2' do
+  uri 'http://ppa.launchpad.net/ondrej/apache2/ubuntu'
+  distribution node['lsb']['codename']
+  components %w(main)
+  keyserver 'keyserver.ubuntu.com'
+  key 'E5267A6C'
+  only_if { node['platform'] == 'ubuntu' }
+end
+
 gem_package 'bundler'
 if node['platform_family'] == 'debian'
   link '/usr/local/bin/bundle' do
@@ -29,24 +37,19 @@ else
   end
 end
 
-Chef::Log.info "starting every enabled"
-every_enabled_application do |application, _deploy|
+execute 'yum-config-manager --enable epel' if node['platform_family'] == 'rhel'
+
+every_enabled_application do |application|
   databases = []
-  every_enabled_rds do |rds|
-    databases.push(Drivers::Db::Factory.build(application, node, rds: rds))
+  every_enabled_rds(self, application) do |rds|
+    databases.push(Drivers::Db::Factory.build(self, application, rds: rds))
   end
 
-  databases = [Drivers::Db::Factory.build(application, node)] if rdses.blank?
+  scm = Drivers::Scm::Factory.build(self, application)
+  framework = Drivers::Framework::Factory.build(self, application, databases: databases)
+  appserver = Drivers::Appserver::Factory.build(self, application)
+  worker = Drivers::Worker::Factory.build(self, application, databases: databases)
+  webserver = Drivers::Webserver::Factory.build(self, application)
 
-  scm = Drivers::Scm::Factory.build(application, node)
-  framework = Drivers::Framework::Factory.build(application, node)
-  appserver = Drivers::Appserver::Factory.build(application, node)
-  worker = Drivers::Worker::Factory.build(application, node)
-  webserver = Drivers::Webserver::Factory.build(application, node)
-  Chef::Log.info("here we go...self")
-  Chef::Log.info(self)
-  [scm, framework, appserver, worker, webserver].each do |meh|
-    Chef::Log.info(meh.inspect)
-  end
-  fire_hook(:setup, context: self, items: databases + [scm, framework, appserver, worker, webserver])
+  fire_hook(:setup, items: databases + [scm, framework, appserver, worker, webserver])
 end

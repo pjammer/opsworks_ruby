@@ -26,7 +26,7 @@ default['nginx']['source']['modules'] = %w(
 ## common
 
 default['defaults']['scm']['remove_scm_files'] = true
-
+default['authorization']['sudo']['include_sudoers_d'] = true
 # appserver
 ## common
 

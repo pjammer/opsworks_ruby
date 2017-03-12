@@ -23,7 +23,7 @@ module Drivers
       def setup(context)
         node.default['nginx']['install_method'] = out[:build_type].to_s == 'source' ? 'source' : 'package'
         recipe = out[:build_type].to_s == 'source' ? 'source' : 'default'
-        context.include_recipe("nginx::default")
+        #context.include_recipe("nginx::default")
         # Chef::Log.info("ss; nginx in recipe")
         # Chef::Log.info("i am here in setup")
         # Chef::Log.info("#{node.default['nginx']['install_method']}")
